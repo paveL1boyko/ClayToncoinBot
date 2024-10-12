@@ -39,7 +39,10 @@ class CryptoBot(CryptoBotApi):
                     await self.sleeper(additional_delay=60 * 2)
 
                     await self.end_game(
-                        game, request_data={"score": random.randint(110, 130)}
+                        game,
+                        request_data={
+                            "score": random.randint(110, 130),
+                        },
                     )
                 if "stack" in game:
                     self.logger.info(
@@ -76,7 +79,6 @@ class CryptoBot(CryptoBotApi):
                     break
                 try:
                     if await self.login_to_app(proxy):
-
                         if self.user_data.dailyReward.can_claim_today:
                             await self.daily_claim()
                         self.super_task = await self.super_tasks()
