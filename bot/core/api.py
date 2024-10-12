@@ -16,37 +16,41 @@ class CryptoBotApi(BaseBotApi):
 
     @cached(ttl=config.LOGIN_CACHE_TTL, cache=Cache.MEMORY)
     @error_handler()
-    @handle_request('/api/user/auth')
+    @handle_request("/api/user/authorization")
     async def login(self, *, response_json: dict) -> UserData:
         return UserData(**response_json)
 
     @error_handler()
-    @handle_request('/api/tasks/super-tasks', method="GET")
+    @handle_request("/api/tasks/super-tasks", method="GET")
     async def super_tasks(self, *, response_json: dict) -> dict:
         return response_json
 
     @error_handler()
-    @handle_request('/api/tasks/partner-tasks', method="GET")
+    @handle_request("/api/tasks/partner-tasks", method="GET")
     async def partner_tasks(self, *, response_json: dict) -> dict:
         return response_json
 
     @error_handler()
-    @handle_request('/a')
+    @handle_request("/api/user/daily-claim")
     async def daily_claim(self, *, response_json: dict) -> dict:
         return response_json
 
     @error_handler()
-    @handle_request('/api/game/save-tile')
+    @handle_request("/api/game/save-tile")
     async def save_tile(self, *, response_json: dict, request_data: dict) -> dict:
         return response_json
 
     @error_handler()
     async def start_game(self, game_name: str) -> dict:
-        request = await self.http_client.post(config.base_url + f"/api/{game_name}/start-game", json={})
-        return await request.json()
+        request = await self.http_client.post(
+            config.base_url + f"/api/{game_name}/start-game", json={}
+        )
+        res = await request.json()
+        self.logger.info(f"Game started: {res}")
+        return res
 
     @error_handler()
-    @handle_request('/api/game/over')
+    @handle_request("/api/game/over")
     async def game_over(self, *, response_json: dict, request_data: dict) -> dict:
         return response_json
 
@@ -56,8 +60,12 @@ class CryptoBotApi(BaseBotApi):
 
     @error_handler()
     async def end_game(self, game_name: str, request_data: dict) -> dict:
-        request = await self.http_client.post(config.base_url + f"/api/{game_name}/end-game", json=request_data)
-        return await request.json()
+        request = await self.http_client.post(
+            config.base_url + f"/api/{game_name}/end-game", json=request_data
+        )
+        res = await request.json()
+        self.logger.info(f"Game ended: {res}")
+        return res
 
     @cached(ttl=2 * 60 * 60, cache=Cache.MEMORY)
     @error_handler()

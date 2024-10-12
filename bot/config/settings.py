@@ -19,7 +19,7 @@ class BaseBotSettings(BaseSettings):
 
     RANDOM_SLEEP_TIME: int = 8
 
-    BOT_SLEEP_TIME: list[int] = [3000, 3500]
+    BOT_SLEEP_TIME: list[int] = [30000, 35000]
 
     LOGIN_CACHE_TTL: int = 3600
     REF_ID: str = '1092379081'

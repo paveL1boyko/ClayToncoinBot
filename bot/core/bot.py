@@ -9,7 +9,7 @@ from bot.config.logger import log
 from bot.config.settings import config
 
 from .api import CryptoBotApi
-from .models import SessionData
+from .models import SessionData, UserData
 
 
 class CryptoBot(CryptoBotApi):
@@ -25,28 +25,44 @@ class CryptoBot(CryptoBotApi):
     async def login_to_app(self, proxy: str | None) -> bool:
         tg_web_data = await self.get_tg_web_data(proxy=proxy)
         self.http_client.headers[config.auth_header] = tg_web_data
-        self.user_data = await self.login()
+        self.user_data: UserData = await self.login()
         return True
 
     async def perform_game(self):
         while self.user_data.user.daily_attempts > 0:
-            for game in config.GAME:
+            for game in random.sample(config.GAME, len(config.GAME)):
                 await self.start_game(game)
-                if 'clay' in game:
-                    self.logger.info("Playing clay game sleep for 2 min before finish")
-                    await asyncio.sleep(60 * 2)
+                if "clay" in game:
+                    self.logger.info(
+                        "Playing <g>Clay</g> game sleep for 2 min before finish"
+                    )
+                    await self.sleeper(additional_delay=60 * 2)
 
-                    await self.end_game(game, request_data={'score': random.randint(110, 130)})
-                if 'stack' in game:
-                    self.logger.info("Playing clay game sleep for 2 min before finish")
-                    await asyncio.sleep(60 * 2)
-                    await self.end_game(game, request_data={
-                        {"score": random.randint(110, 130), "multiplier": random.randint(1, 3)}})
-                if 'game' in game:
+                    await self.end_game(
+                        game, request_data={"score": random.randint(110, 130)}
+                    )
+                if "stack" in game:
+                    self.logger.info(
+                        "Playing <g>Stack</g> game sleep for 2 min before finish"
+                    )
+                    await self.sleeper(additional_delay=60 * 2)
+                    await self.end_game(
+                        game,
+                        request_data={
+                            "score": random.randint(110, 130),
+                            "multiplier": random.randint(1, 3),
+                        },
+                    )
+                if "game" in game:
+                    self.logger.info(
+                        "Playing <g>1024</g> game sleep for 2 min before finish"
+                    )
                     for i in range(1, 25):
-                        await self.save_tile(request_data={"maxTile": 2 ** i})
+                        await self.save_tile(request_data={"maxTile": 2**i})
                         await asyncio.sleep(random.randint(4, 6) + random.uniform(0, 1))
-                    await self.game_over(request_data={"multiplier": random.randint(1, 4)})
+                    await self.game_over(
+                        request_data={"multiplier": random.randint(1, 4)}
+                    )
                 self.user_data.user.daily_attempts -= 1
 
     async def execute_tasks(self):
@@ -60,8 +76,11 @@ class CryptoBot(CryptoBotApi):
                     break
                 try:
                     if await self.login_to_app(proxy):
+
+                        if self.user_data.dailyReward.can_claim_today:
+                            await self.daily_claim()
                         self.super_task = await self.super_tasks()
-                        self.partner_tasks =  await self.partner_tasks()
+                        self.partner_tasks = await self.partner_tasks()
 
                     # if config.EXECUTE_TASKS:
                     #     await self.execute_tasks()
@@ -82,6 +101,8 @@ class CryptoBot(CryptoBotApi):
 
 async def run_bot(tg_client: Client, proxy: str | None, additional_data: dict) -> None:
     try:
-        await CryptoBot(tg_client=tg_client, additional_data=additional_data).run(proxy=proxy)
+        await CryptoBot(tg_client=tg_client, additional_data=additional_data).run(
+            proxy=proxy
+        )
     except RuntimeError:
         log.bind(session_name=tg_client.name).exception("Session error")
